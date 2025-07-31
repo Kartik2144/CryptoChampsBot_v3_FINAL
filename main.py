@@ -1,8 +1,12 @@
 import threading
 import time
+import os
 from src.signal_engine import scan_and_send_signals
 from telegram_listener import run_bot
 
+if not os.getenv("TELEGRAM_BOT_TOKEN"):
+    raise RuntimeError("🚨 TELEGRAM_BOT_TOKEN missing — set it on Railway!")
+    
 def start_listener():
     print("✅ Telegram bot listener running...")
     run_bot()
