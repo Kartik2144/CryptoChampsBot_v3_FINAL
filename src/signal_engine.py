@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime
 from src.telegram_bot import send_signal
 from src.pnl_tracker import track_trade
-
+from src.pnl_tracker import log_trade
 exchange = ccxt.binance()
 
 def fetch_ohlcv(symbol, timeframe="15m", limit=50):
@@ -34,6 +34,8 @@ def hybrid_strategy(symbol):
         sl = entry * (0.985 if signal == "LONG" else 1.015)
         send_signal(symbol, signal, entry, tp, sl, confidence)
         track_trade(symbol, signal, entry, tp, sl)
+        send_signal(signal)
+        log_trade(signal['pair'], signal['direction'], signal['entry'], signal['tp'], signal['sl'], signal['confidence'])
 
 def scan_and_send_signals():
     top_pairs = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT"]
