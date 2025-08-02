@@ -32,9 +32,9 @@ def hybrid_strategy(symbol):
         entry = round(last['close'], 2)
         tp = entry * (1.015 if signal == "LONG" else 0.985)
         sl = entry * (0.985 if signal == "LONG" else 1.015)
-    #    send_signal(symbol, signal, entry, tp, sl, confidence)
+        send_signal(symbol, signal, entry, tp, sl, confidence)
         track_trade(symbol, signal, entry, tp, sl)
-        send_signal(signal)
+     #  send_signal(signal)
         log_trade(signal['pair'], signal['direction'], signal['entry'], signal['tp'], signal['sl'], signal['confidence'])
 
 def scan_and_send_signals():
