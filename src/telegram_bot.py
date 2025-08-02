@@ -10,7 +10,7 @@ requests.get(f"https://api.telegram.org/bot{TOKEN}/deleteWebhook")
 print("✅ Webhook deleted (polling enabled)")
 
 if not TOKEN:
-    raise ValueError("❌ TELEGRAM_BOT_TOKEN is not set. Please add it to Railway environment variables.")
+    raise ValueError("❌ YOUR_TELEGRAM_BOT_TOKEN is not set. Please add it to Railway environment variables.")
 bot = telebot.TeleBot(TOKEN)
 
 def send_signal(pair, direction, entry, tp, sl, confidence):
