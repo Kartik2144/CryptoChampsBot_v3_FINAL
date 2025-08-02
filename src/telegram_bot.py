@@ -1,8 +1,12 @@
 import telebot
 import threading
+import os
 
-TOKEN = "TELEGRAM_BOT_TOKEN"
-CHAT_ID = "TELEGRAM_CHAT_ID"
+TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+
+if not TOKEN:
+    raise ValueError("❌ TELEGRAM_BOT_TOKEN is not set. Please add it to Railway environment variables.")
 bot = telebot.TeleBot(TOKEN)
 
 def send_signal(pair, direction, entry, tp, sl, confidence):
@@ -13,6 +17,7 @@ def send_signal(pair, direction, entry, tp, sl, confidence):
           f"⛔ SL: {sl}\n" \
           f"📊 Confidence: {confidence}%"
     bot.send_message(CHAT_ID, msg)
+    print(f"✅ Signal sent: {signal['pair']}")
 
 @bot.message_handler(commands=['testsignal'])
 def test_signal(message):
