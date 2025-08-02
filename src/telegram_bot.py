@@ -1,9 +1,13 @@
 import telebot
 import threading
 import os
+import requests
 
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+
+requests.get(f"https://api.telegram.org/bot{TOKEN}/deleteWebhook")
+print("✅ Webhook deleted (polling enabled)")
 
 if not TOKEN:
     raise ValueError("❌ TELEGRAM_BOT_TOKEN is not set. Please add it to Railway environment variables.")
