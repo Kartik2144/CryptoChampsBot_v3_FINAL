@@ -2,6 +2,7 @@ import telebot
 import threading
 import os
 import requests
+from src.pnl_tracker import get_daily_pnl
 
 TOKEN = os.getenv("YOUR_TELEGRAM_BOT_TOKEN")
 CHAT_ID = os.getenv("YOUR_TELEGRAM_CHAT_ID")
@@ -26,6 +27,15 @@ def send_signal(pair, direction, entry, tp, sl, confidence):
 @bot.message_handler(commands=['testsignal'])
 def test_signal(message):
     bot.reply_to(message, "✅ Bot is active and ready!")
+
+@bot.message_handler(commands=['pnl'])
+def pnl_command(message):
+    pnl_data = get_daily_pnl()
+    msg = (f"📊 *Daily PnL Summary*\n"
+           f"✅ Wins: {pnl_data['wins']}\n"
+           f"❌ Losses: {pnl_data['losses']}\n"
+           f"💰 PnL: {pnl_data['pnl']}R (simulated)\n")
+    bot.reply_to(message, msg, parse_mode="Markdown")
 
 def run_telegram_bot():
     threading.Thread(target=lambda: bot.polling(non_stop=True)).start()
