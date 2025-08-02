@@ -3,8 +3,7 @@ from src.signal_engine import scan_and_send_signals
 from src.telegram_bot import run_telegram_bot
 import os
 
-if not os.getenv("YOUR_TELEGRAM_BOT_TOKEN
-"):
+if not os.getenv("YOUR_TELEGRAM_BOT_TOKEN"):
     raise RuntimeError("🚨 YOUR_TELEGRAM_BOT_TOKEN missing — set it on Railway!")
     
 if __name__ == "__main__":
