@@ -1,7 +1,11 @@
 import time
 from src.signal_engine import scan_and_send_signals
 from src.telegram_bot import run_telegram_bot
+import os
 
+if not os.getenv("TELEGRAM_BOT_TOKEN"):
+    raise RuntimeError("🚨 TELEGRAM_BOT_TOKEN missing — set it on Railway!")
+    
 if __name__ == "__main__":
     print("🚀 CryptoChamps Hybrid Bot started...")
     run_telegram_bot()
