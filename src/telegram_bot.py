@@ -1,8 +1,8 @@
 import telebot
 import threading
 
-TOKEN = "YOUR_TELEGRAM_BOT_TOKEN"
-CHAT_ID = "YOUR_TELEGRAM_CHAT_ID"
+TOKEN = "TELEGRAM_BOT_TOKEN"
+CHAT_ID = "TELEGRAM_CHAT_ID"
 bot = telebot.TeleBot(TOKEN)
 
 def send_signal(pair, direction, entry, tp, sl, confidence):
