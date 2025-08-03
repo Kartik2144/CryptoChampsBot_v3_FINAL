@@ -53,7 +53,13 @@ def pnl_command(message):
         f"❌ Losses: <b>{pnl_data['losses']}</b>\n"
         f"💰 Net PnL: <b>${pnl_data['net_pnl']}</b>\n\n"
     )
-
+    # Format last 5 trades for Telegram
+    recent_trades = []
+    for trade in rows[:5]:  
+        pair, direction, status, pnl = trade
+        emoji = "✅" if status == "tp" else "❌"
+        recent_trades.append(f"{emoji} {pair} | {direction} | {status.upper()} | PnL: {pnl}")
+        
     # ✅ Add recent trades if available
     if pnl_data["recent_trades"]:
         summary_msg += "<b>📜 Recent Trades:</b>\n"
