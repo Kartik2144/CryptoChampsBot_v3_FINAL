@@ -53,6 +53,7 @@ def pnl_command(message):
         f"❌ Losses: <b>{pnl_data['losses']}</b>\n"
         f"💰 Net PnL: <b>${pnl_data['net_pnl']}</b>\n\n"
     )
+    rows = c.fetchall()
     # Format last 5 trades for Telegram
     recent_trades = []
     for trade in rows[:5]:  
