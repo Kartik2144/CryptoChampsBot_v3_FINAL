@@ -59,6 +59,14 @@ def update_trade_status(pair, status):
     conn.commit()
     conn.close()
 
+def save_trade(pair, direction, entry, tp, sl):
+    conn = sqlite3.connect("pnl_data.db")
+    c = conn.cursor()
+    c.execute("INSERT INTO trades (pair, direction, entry, tp, sl, status) VALUES (?, ?, ?, ?, ?, ?)",
+              (pair, direction, entry, tp, sl, "open"))
+    conn.commit()
+    conn.close()
+
 def get_daily_pnl():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
