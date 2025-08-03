@@ -3,6 +3,7 @@ import threading
 import os
 import requests
 from src.pnl_tracker import get_daily_pnl
+from src.pnl_tracker import save_trade
 
 TOKEN = os.getenv("YOUR_TELEGRAM_BOT_TOKEN")
 CHAT_ID = os.getenv("YOUR_TELEGRAM_CHAT_ID")
@@ -23,6 +24,8 @@ def send_signal(pair, direction, entry, tp, sl, confidence):
           f"📊 Confidence: {confidence}%"
     bot.send_message(CHAT_ID, msg)
     print(f"✅ Signal sent: {signal['pair']}")
+    save_trade(signal['pair'], signal['direction'], signal['entry'], signal['tp'], signal['sl'])
+
 
 @bot.message_handler(commands=['testsignal'])
 def test_signal(message):
