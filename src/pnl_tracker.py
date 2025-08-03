@@ -27,8 +27,6 @@ def init_db():
     except sqlite3.OperationalError:
     # Column already exists
     pass
-
-    conn.commit()
     conn.close()
 
 def save_trade(pair, direction, entry, tp, sl):
