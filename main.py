@@ -5,6 +5,7 @@ import os
 import schedule, time, threading
 from src.pnl_tracker import get_daily_pnl
 from src.telegram_bot import bot
+from src.pnl_tracker import init_db
 
 if not os.getenv("YOUR_TELEGRAM_BOT_TOKEN"):
     raise RuntimeError("🚨 YOUR_TELEGRAM_BOT_TOKEN missing — set it on Railway!")
@@ -15,6 +16,10 @@ if __name__ == "__main__":
     while True:
         scan_and_send_signals()
         time.sleep(3600)  # check every hour
+
+print("📊 Initializing database...")
+init_db()
+print("✅ Database ready.")
 
 def send_daily_pnl():
     pnl_data = get_daily_pnl()
