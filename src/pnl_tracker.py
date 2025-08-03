@@ -13,32 +13,8 @@ def track_trade(pair, direction, entry, sl, tp):
     """
     conn = sqlite3.connect("pnl_tracker.db")
     cur = conn.cursor()
-
-    # ✅ Create table if it doesn't exist
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS trades (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            timestamp TEXT,
-            pair TEXT,
-            direction TEXT,
-            entry REAL,
-            sl REAL,
-            tp REAL,
-            status TEXT DEFAULT 'OPEN'
-        )
-    """)
-
-    # ✅ Insert the trade into DB
-    cur.execute("""
-        INSERT INTO trades (timestamp, pair, direction, entry, sl, tp)
-        VALUES (?, ?, ?, ?, ?, ?)
-    """, (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), pair, direction, entry, sl, tp))
-
-    conn.commit()
-    conn.close()
-    print(f"✅ Trade tracked: {pair} | {direction} | Entry {entry}")
-
-def init_db():
+    
+    def init_db():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS trades (
@@ -55,6 +31,17 @@ def init_db():
                 )''')
     conn.commit()
     conn.close()
+    
+
+    # ✅ Insert the trade into DB
+    cur.execute("""
+        INSERT INTO trades (timestamp, pair, direction, entry, sl, tp)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), pair, direction, entry, sl, tp))
+
+    conn.commit()
+    conn.close()
+    print(f"✅ Trade tracked: {pair} | {direction} | Entry {entry}")
 
 def log_trade(pair, direction, entry, tp, sl, confidence):
     conn = sqlite3.connect(DB_FILE)
