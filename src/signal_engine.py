@@ -2,7 +2,7 @@ import ccxt
 import pandas as pd
 from datetime import datetime
 from src.telegram_bot import send_signal
-from src.pnl_tracker import track_trade
+from src.pnl_tracker import save_trade
 from src.pnl_tracker import log_trade
 exchange = ccxt.binance()
 
@@ -33,7 +33,7 @@ def hybrid_strategy(symbol):
         tp = entry * (1.015 if signal == "LONG" else 0.985)
         sl = entry * (0.985 if signal == "LONG" else 1.015)
         send_signal(symbol, direction, signal, entry, tp, sl, confidence)
-        track_trade(symbol, direction, signal, entry, tp, sl)
+        save_trade(symbol, direction, entry, tp, sl)
      #  send_signal(signal)
         log_trade(signal['pair'], signal['direction'], signal['entry'], signal['tp'], signal['sl'], signal['confidence'])
 
