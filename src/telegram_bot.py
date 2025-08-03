@@ -9,7 +9,7 @@ import sqlite3
 
 TOKEN = os.getenv("YOUR_TELEGRAM_BOT_TOKEN")
 CHAT_ID = os.getenv("YOUR_TELEGRAM_CHAT_ID")
-
+DB_FILE = "pnl_data.db"
 requests.get(f"https://api.telegram.org/bot{TOKEN}/deleteWebhook")
 print("✅ Webhook deleted (polling enabled)")
 
@@ -42,6 +42,7 @@ def start_command(message):
 @bot.message_handler(commands=['testsignal'])
 def test_signal(message):
     bot.reply_to(message, "✅ Bot is active and ready!")
+
 
 @bot.message_handler(commands=['pnl'])
 def pnl_command(message):
