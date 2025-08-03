@@ -34,11 +34,25 @@ def test_signal(message):
 @bot.message_handler(commands=['pnl'])
 def pnl_command(message):
     pnl_data = get_daily_pnl()
-    msg = (f"📊 *Daily PnL Summary*\n"
-           f"✅ Wins: {pnl_data['wins']}\n"
-           f"❌ Losses: {pnl_data['losses']}\n"
-           f"💰 PnL: {pnl_data['pnl']}R (simulated)\n")
-    bot.reply_to(message, msg, parse_mode="Markdown")
+
+    # ✅ Build the response
+    response = (
+        f"📊 *Daily PnL Summary*\n"
+        f"✅ Wins: {pnl_data['wins']} | ❌ Losses: {pnl_data['losses']}\n"
+        f"💰 Net PnL: ${pnl_data['net_pnl']}\n\n"
+        f"📝 *Last 5 Trades Today:*\n"
+    )
+
+    if pnl_data['recent_trades']:
+        for i, trade in enumerate(pnl_data['recent_trades'], start=1):
+            pair, direction, status, pnl = trade
+            status_emoji = "✅" if status == "TP" else "❌"
+            response += f"{i}. {pair} – {direction} – {status_emoji} ({pnl}%)\n"
+    else:
+        response += "No trades today yet."
+
+    bot.send_message(message.chat.id, response, parse_mode="Markdown")
+
 
 def run_telegram_bot():
     threading.Thread(target=lambda: bot.polling(non_stop=True)).start()
