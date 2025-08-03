@@ -26,7 +26,17 @@ def send_signal(pair, direction, entry, tp, sl, confidence):
     print(f"✅ Signal sent: {signal['pair']}")
     save_trade(signal['pair'], signal['direction'], signal['entry'], signal['tp'], signal['sl'])
 
-
+# ✅ Command: /start
+@bot.message_handler(commands=['start'])
+def start_command(message):
+    bot.reply_to(
+        message,
+        "👋 <b>Welcome to CryptoChamps Hybrid Bot!</b>\n\n"
+        "Use the following commands:\n"
+        "📊 /pnl - Show today’s simulated PnL\n"
+        "🚀 /testsignal - Send a sample signal\n",
+        parse_mode="HTML"
+    )
 @bot.message_handler(commands=['testsignal'])
 def test_signal(message):
     bot.reply_to(message, "✅ Bot is active and ready!")
@@ -35,24 +45,24 @@ def test_signal(message):
 def pnl_command(message):
     pnl_data = get_daily_pnl()
 
-    # ✅ Build the response
-    response = (
-        f"📊 *Daily PnL Summary*\n"
-        f"✅ Wins: {pnl_data['wins']} | ❌ Losses: {pnl_data['losses']}\n"
-        f"💰 Net PnL: ${pnl_data['net_pnl']}\n\n"
-        f"📝 *Last 5 Trades Today:*\n"
+   # ✅ Basic summary
+    summary_msg = (
+        f"📊 <b>Daily PnL Report ({datetime.now().strftime('%Y-%m-%d')})</b>\n\n"
+        f"✅ Wins: <b>{pnl_data['wins']}</b>\n"
+        f"❌ Losses: <b>{pnl_data['losses']}</b>\n"
+        f"💰 Net PnL: <b>${pnl_data['net_pnl']}</b>\n\n"
     )
 
-    if pnl_data['recent_trades']:
-        for i, trade in enumerate(pnl_data['recent_trades'], start=1):
-            pair, direction, status, pnl = trade
-            status_emoji = "✅" if status == "TP" else "❌"
-            response += f"{i}. {pair} – {direction} – {status_emoji} ({pnl}%)\n"
+    # ✅ Add recent trades if available
+    if pnl_data["recent_trades"]:
+        summary_msg += "<b>📜 Recent Trades:</b>\n"
+        for trade in pnl_data["recent_trades"]:
+            summary_msg += f"{trade}\n"
     else:
-        response += "No trades today yet."
+        summary_msg += "No trades today yet."
 
-    bot.send_message(message.chat.id, response, parse_mode="Markdown")
-
+    bot.reply_to(message, summary_msg, parse_mode="HTML")
 
 def run_telegram_bot():
+    print("✅ Telegram bot listener started (polling mode)...")
     threading.Thread(target=lambda: bot.polling(non_stop=True)).start()
