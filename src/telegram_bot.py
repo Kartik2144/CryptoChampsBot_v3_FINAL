@@ -53,6 +53,12 @@ def pnl_command(message):
         f"❌ Losses: <b>{pnl_data['losses']}</b>\n"
         f"💰 Net PnL: <b>${pnl_data['net_pnl']}</b>\n\n"
     )
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute(
+        "SELECT pair, direction, status, pnl FROM trades WHERE created_at LIKE ? ORDER BY created_at DESC",
+        (f"{today}%",)
+    )
     rows = c.fetchall()
     # Format last 5 trades for Telegram
     recent_trades = []
