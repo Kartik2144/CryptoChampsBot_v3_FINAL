@@ -16,9 +16,18 @@ def init_db():
             tp REAL,
             sl REAL,
             status TEXT,
+            pnl REAL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    try:
+    c.execute("ALTER TABLE trades ADD COLUMN pnl REAL")
+    conn.commit()
+    print("✅ Added missing pnl column to trades table.")
+    except sqlite3.OperationalError:
+    # Column already exists
+    pass
+
     conn.commit()
     conn.close()
 
