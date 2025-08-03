@@ -1,5 +1,5 @@
 import sqlite3
-import datetime
+from datetime import datetime
 
 # ✅ define DB_FILE first
 DB_FILE = "pnl_data.db"
