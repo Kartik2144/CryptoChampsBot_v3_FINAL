@@ -38,16 +38,29 @@ def update_trade_status(trade_id, status):
     conn.close()
 
 def get_daily_pnl():
+    """
+    Returns today's PnL summary.
+    Always returns a dict with keys: wins, losses, pnl.
+    """
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
-    today = datetime.datetime.now().strftime("%Y-%m-%d")
-    c.execute("SELECT direction, entry, tp, sl, status FROM trades WHERE created_at LIKE ?", (f"{today}%",))
-    trades = c.fetchall()
+    today = datetime.now().strftime("%Y-%m-%d")
+
+    c.execute("SELECT status FROM trades WHERE created_at LIKE ?", (f"{today}%",))
+    rows = c.fetchall()
     conn.close()
 
-    total_pnl = 0
-    tp_hits = 0
-    sl_hits = 0
+    wins = sum(1 for r in rows if r[0] == "TP")
+    losses = sum(1 for r in rows if r[0] == "SL")
+
+    total_trades = wins + losses
+    pnl = ((wins - losses) / total_trades * 100) if total_trades > 0 else 0
+
+    return {
+        "wins": wins,
+        "losses": losses,
+        "pnl": round(pnl, 2)
+    }
 
     for trade in trades:
         direction, entry, tp, sl, status = trade
