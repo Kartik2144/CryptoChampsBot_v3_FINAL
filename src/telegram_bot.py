@@ -58,8 +58,7 @@ def pnl_command(message):
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
     c.execute(
-        "SELECT pair, direction, status, pnl FROM trades WHERE created_at LIKE ? ORDER BY created_at DESC",
-        (f"{today}%",)
+        "SELECT pair, direction, status, pnl FROM trades WHERE created_at LIKE ? ORDER BY created_at DESC",(f"{today}%",)
     )
     rows = c.fetchall()
     # Format last 5 trades for Telegram
