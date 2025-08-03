@@ -1,86 +1,61 @@
-# ✅ NEW FILE: src/pnl_tracker.py
 import sqlite3
-from datetime import datetime
-import pytz
+import datetime
 
-DB_FILE = "trades.db"
-IST = pytz.timezone("Asia/Kolkata")
+# ✅ define DB_FILE first
+DB_FILE = "pnl_data.db"
 
-def track_trade(pair, direction, entry, sl, tp):
-    """
-    Track each trade for PnL simulation.
-    Stores trade details into an SQLite DB for later PnL calculation.
-    """
-    conn = sqlite3.connect("pnl_tracker.db")
-    cur = conn.cursor()
-    
-    def init_db():
+def init_db():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS trades (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    pair TEXT,
-                    direction TEXT,
-                    entry REAL,
-                    tp REAL,
-                    sl REAL,
-                    confidence INTEGER,
-                    status TEXT,
-                    created_at TEXT,
-                    closed_at TEXT
-                )''')
-    conn.commit()
-    conn.close()
-    
-
-    # ✅ Insert the trade into DB
-    cur.execute("""
-        INSERT INTO trades (timestamp, pair, direction, entry, sl, tp)
-        VALUES (?, ?, ?, ?, ?, ?)
-    """, (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), pair, direction, entry, sl, tp))
-
-    conn.commit()
-    conn.close()
-    print(f"✅ Trade tracked: {pair} | {direction} | Entry {entry}")
-
-def log_trade(pair, direction, entry, tp, sl, confidence):
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute("INSERT INTO trades (pair, direction, entry, tp, sl, confidence, status, created_at) VALUES (?,?,?,?,?,?,?,?)",
-              (pair, direction, entry, tp, sl, confidence, "open", datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S")))
-    conn.commit()
-    conn.close()
-
-def update_trade_status(pair, status):
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute("UPDATE trades SET status=?, closed_at=? WHERE pair=? AND status='open'",
-              (status, datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S"), pair))
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS trades (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            pair TEXT,
+            direction TEXT,
+            entry REAL,
+            tp REAL,
+            sl REAL,
+            status TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
     conn.commit()
     conn.close()
 
 def save_trade(pair, direction, entry, tp, sl):
-    conn = sqlite3.connect("pnl_data.db")
+    conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
     c.execute("INSERT INTO trades (pair, direction, entry, tp, sl, status) VALUES (?, ?, ?, ?, ?, ?)",
               (pair, direction, entry, tp, sl, "open"))
     conn.commit()
     conn.close()
 
+def update_trade_status(trade_id, status):
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("UPDATE trades SET status = ? WHERE id = ?", (status, trade_id))
+    conn.commit()
+    conn.close()
+
 def get_daily_pnl():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
-    today = datetime.now(IST).strftime("%Y-%m-%d")
-    c.execute("SELECT status FROM trades WHERE created_at LIKE ?", (f"{today}%",))
+    today = datetime.datetime.now().strftime("%Y-%m-%d")
+    c.execute("SELECT direction, entry, tp, sl, status FROM trades WHERE created_at LIKE ?", (f"{today}%",))
     trades = c.fetchall()
     conn.close()
 
-    wins = sum(1 for t in trades if t[0] == "hit-tp")
-    losses = sum(1 for t in trades if t[0] == "hit-sl")
+    total_pnl = 0
+    tp_hits = 0
+    sl_hits = 0
 
-    pnl = (wins * 1.5) - (losses * 1.0)
-    return {
-        "wins": wins,
-        "losses": losses,
-        "pnl": pnl
-    }
+    for trade in trades:
+        direction, entry, tp, sl, status = trade
+        if status == "TP":
+            tp_hits += 1
+            total_pnl += abs(tp - entry)
+        elif status == "SL":
+            sl_hits += 1
+            total_pnl -= abs(sl - entry)
+
+    return {"date": today, "total_pnl": total_pnl, "tp_hits": tp_hits, "sl_hits": sl_hits}
