@@ -5,6 +5,7 @@ import requests
 from src.pnl_tracker import get_daily_pnl
 from src.pnl_tracker import save_trade
 from datetime import datetime
+import sqlite3
 
 TOKEN = os.getenv("YOUR_TELEGRAM_BOT_TOKEN")
 CHAT_ID = os.getenv("YOUR_TELEGRAM_CHAT_ID")
