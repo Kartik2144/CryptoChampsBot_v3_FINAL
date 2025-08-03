@@ -1,13 +1,15 @@
 import sqlite3
 from datetime import datetime
 
-# ✅ define DB_FILE first
-DB_FILE = "pnl_data.db"
+DB_FILE = "trades.db"
 
+# ✅ Initialize DB & ensure pnl column exists
 def init_db():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
-    c.execute("""
+
+    # Create trades table if it doesn't exist
+    c.execute('''
         CREATE TABLE IF NOT EXISTS trades (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             pair TEXT,
@@ -19,75 +21,68 @@ def init_db():
             pnl REAL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-    """)
+    ''')
+
+    # ✅ Try to add pnl column if it doesn’t exist already
     try:
-    c.execute("ALTER TABLE trades ADD COLUMN pnl REAL")
-    conn.commit()
-    print("✅ Added missing pnl column to trades table.")
+        c.execute("ALTER TABLE trades ADD COLUMN pnl REAL")
+        conn.commit()
+        print("✅ Added missing pnl column to trades table.")
     except sqlite3.OperationalError:
-    # Column already exists
-    pass
+        # Column already exists – ignore
+        pass
+
+    conn.commit()
     conn.close()
 
+
+# ✅ Save trade entry
 def save_trade(pair, direction, entry, tp, sl):
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
-    c.execute("INSERT INTO trades (pair, direction, entry, tp, sl, status) VALUES (?, ?, ?, ?, ?, ?)",
-              (pair, direction, entry, tp, sl, "open"))
+    c.execute(
+        "INSERT INTO trades (pair, direction, entry, tp, sl, status) VALUES (?, ?, ?, ?, ?, ?)",
+        (pair, direction, entry, tp, sl, 'open')
+    )
     conn.commit()
     conn.close()
 
-def update_trade_status(trade_id, status):
+
+# ✅ Update trade when closed (hit TP or SL)
+def update_trade_status(trade_id, status, pnl_value):
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
-    c.execute("UPDATE trades SET status = ? WHERE id = ?", (status, trade_id))
+    c.execute(
+        "UPDATE trades SET status = ?, pnl = ? WHERE id = ?",
+        (status, pnl_value, trade_id)
+    )
     conn.commit()
     conn.close()
 
+
+# ✅ Fetch daily PnL summary (ONLY TODAY’S TRADES)
 def get_daily_pnl():
-    """
-    Returns today's PnL summary.
-    Always returns a dict with keys: wins, losses, pnl.
-    """
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
+
     today = datetime.now().strftime("%Y-%m-%d")
-
-    # ✅ Fetch today's trades
-    c.execute("SELECT pair, direction, status, pnl FROM trades WHERE created_at LIKE ? ORDER BY created_at DESC", (f"{today}%",))
-    trades = c.fetchall()
-
-    wins = sum(1 for t in trades if t[2] == 'TP')
-    losses = sum(1 for t in trades if t[2] == 'SL')
-    net_pnl = sum(t[3] for t in trades)
-
-    # ✅ Get only the last 5 trades
-    recent_trades = trades[:5]
-    
-    c.execute("SELECT status FROM trades WHERE created_at LIKE ?", (f"{today}%",))
+    c.execute(
+        "SELECT status, pnl FROM trades WHERE created_at LIKE ?",
+        (f"{today}%",)
+    )
     rows = c.fetchall()
     conn.close()
 
-    wins = sum(1 for r in rows if r[0] == "TP")
-    losses = sum(1 for r in rows if r[0] == "SL")
-
-    total_trades = wins + losses
-    pnl = ((wins - losses) / total_trades * 100) if total_trades > 0 else 0
+    wins = sum(1 for r in rows if r[0] == 'tp')
+    losses = sum(1 for r in rows if r[0] == 'sl')
+    total_pnl = sum(r[1] for r in rows if r[1] is not None)
 
     return {
         "wins": wins,
         "losses": losses,
-        "net_pnl": round(net_pnl, 2),
-        "recent_trades": recent_trades
+        "total_pnl": round(total_pnl, 2)
     }
 
-    for trade in trades:
-        direction, entry, tp, sl, status = trade
-        if status == "TP":
-            tp_hits += 1
-            total_pnl += abs(tp - entry)
-        elif status == "SL":
-            sl_hits += 1
-            total_pnl -= abs(sl - entry)
 
-    return {"date": today, "total_pnl": total_pnl, "tp_hits": tp_hits, "sl_hits": sl_hits}
+# ✅ Initialize DB on import
+init_db()
