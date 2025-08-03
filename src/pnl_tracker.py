@@ -46,6 +46,17 @@ def get_daily_pnl():
     c = conn.cursor()
     today = datetime.now().strftime("%Y-%m-%d")
 
+    # ✅ Fetch today's trades
+    c.execute("SELECT pair, direction, status, pnl FROM trades WHERE created_at LIKE ? ORDER BY created_at DESC", (f"{today}%",))
+    trades = c.fetchall()
+
+    wins = sum(1 for t in trades if t[2] == 'TP')
+    losses = sum(1 for t in trades if t[2] == 'SL')
+    net_pnl = sum(t[3] for t in trades)
+
+    # ✅ Get only the last 5 trades
+    recent_trades = trades[:5]
+    
     c.execute("SELECT status FROM trades WHERE created_at LIKE ?", (f"{today}%",))
     rows = c.fetchall()
     conn.close()
@@ -59,7 +70,8 @@ def get_daily_pnl():
     return {
         "wins": wins,
         "losses": losses,
-        "pnl": round(pnl, 2)
+        "net_pnl": round(net_pnl, 2),
+        "recent_trades": recent_trades
     }
 
     for trade in trades:
