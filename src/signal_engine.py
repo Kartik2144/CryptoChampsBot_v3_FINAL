@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime
 from src.telegram_bot import send_signal
 from src.pnl_tracker import save_trade
-from src.pnl_tracker import log_trade
+#from src.pnl_tracker import log_trade
 exchange = ccxt.binance()
 
 def fetch_ohlcv(symbol, timeframe="15m", limit=50):
