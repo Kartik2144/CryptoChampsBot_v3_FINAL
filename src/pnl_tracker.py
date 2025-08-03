@@ -75,14 +75,13 @@ def get_daily_pnl():
 
     wins = sum(1 for r in rows if r[0] == 'tp')
     losses = sum(1 for r in rows if r[0] == 'sl')
-    total_pnl = sum(r[1] for r in rows if r[1] is not None)
+    net_pnl = sum(r[1] for r in rows if r[1] is not None)
 
     return {
         "wins": wins,
         "losses": losses,
-        "total_pnl": round(total_pnl, 2)
+        "net_pnl": round(net_pnl, 2)   # ✅ renamed from total_pnl to net_pnl
     }
-
 
 # ✅ Initialize DB on import
 init_db()
