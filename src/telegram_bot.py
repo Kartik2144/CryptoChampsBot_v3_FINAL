@@ -47,7 +47,7 @@ def test_signal(message):
 @bot.message_handler(commands=['pnl'])
 def pnl_command(message):
     pnl_data = get_daily_pnl()
-
+    today = datetime.now().strftime("%Y-%m-%d")  # ✅ Define today
    # ✅ Basic summary
     summary_msg = (
         f"📊 <b>Daily PnL Report ({datetime.now().strftime('%Y-%m-%d')})</b>\n\n"
