@@ -1,83 +1,108 @@
 import telebot
 import threading
-import os
-import requests
-from src.pnl_tracker import get_daily_pnl
-from src.pnl_tracker import save_trade
 from datetime import datetime
+import pytz
 import sqlite3
+import os
 
-TOKEN = os.getenv("YOUR_TELEGRAM_BOT_TOKEN")
-CHAT_ID = os.getenv("YOUR_TELEGRAM_CHAT_ID")
-DB_FILE = "pnl_data.db"
-requests.get(f"https://api.telegram.org/bot{TOKEN}/deleteWebhook")
-print("✅ Webhook deleted (polling enabled)")
+TOKEN = os.getenv("TELEGRAM_TOKEN")
+CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+DB_FILE = "trades.db"
 
-if not TOKEN:
-    raise ValueError("❌ YOUR_TELEGRAM_BOT_TOKEN is not set. Please add it to Railway environment variables.")
 bot = telebot.TeleBot(TOKEN)
 
-def send_signal(pair, direction, entry, tp, sl, confidence):
-    msg = f"📢 Signal Alert ({direction})\n\n" \
-          f"🔹 Pair: {pair}\n" \
-          f"🎯 Entry: {entry}\n" \
-          f"✅ TP: {tp}\n" \
-          f"⛔ SL: {sl}\n" \
-          f"📊 Confidence: {confidence}%"
-    bot.send_message(CHAT_ID, msg)
-    print(f"✅ Signal sent: {signal['pair']}")
-    save_trade(signal['pair'], signal['direction'], signal['entry'], signal['tp'], signal['sl'])
-
-# ✅ Command: /start
-@bot.message_handler(commands=['start'])
-def start_command(message):
-    bot.reply_to(
-        message,
-        "👋 <b>Welcome to CryptoChamps Hybrid Bot!</b>\n\n"
-        "Use the following commands:\n"
-        "📊 /pnl - Show today’s simulated PnL\n"
-        "🚀 /testsignal - Send a sample signal\n",
-        parse_mode="HTML"
-    )
-@bot.message_handler(commands=['testsignal'])
-def test_signal(message):
-    bot.reply_to(message, "✅ Bot is active and ready!")
-
-
+# /pnl command - shows today's trades
 @bot.message_handler(commands=['pnl'])
 def pnl_command(message):
-    pnl_data = get_daily_pnl()
-    today = datetime.now().strftime("%Y-%m-%d")  # ✅ Define today
-   # ✅ Basic summary
-    summary_msg = (
-        f"📊 <b>Daily PnL Report ({datetime.now().strftime('%Y-%m-%d')})</b>\n\n"
-        f"✅ Wins: <b>{pnl_data['wins']}</b>\n"
-        f"❌ Losses: <b>{pnl_data['losses']}</b>\n"
-        f"💰 Net PnL: <b>${pnl_data['net_pnl']}</b>\n\n"
-    )
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute(
-        "SELECT pair, direction, status, pnl FROM trades WHERE created_at LIKE ? ORDER BY created_at DESC",(f"{today}%",)
-    )
-    rows = c.fetchall()
-    # Format last 5 trades for Telegram
-    recent_trades = []
-    for trade in rows[:5]:  
-        pair, direction, status, pnl = trade
-        emoji = "✅" if status == "tp" else "❌"
-        recent_trades.append(f"{emoji} {pair} | {direction} | {status.upper()} | PnL: {pnl}")
-        
-    # ✅ Add recent trades if available
-    if pnl_data["recent_trades"]:
-        summary_msg += "<b>📜 Recent Trades:</b>\n"
-        for trade in pnl_data["recent_trades"]:
-            summary_msg += f"{trade}\n"
-    else:
-        summary_msg += "No trades today yet."
+    try:
+        today = datetime.now(pytz.timezone("Asia/Kolkata")).strftime("%Y-%m-%d")
+        conn = sqlite3.connect(DB_FILE)
+        c = conn.cursor()
+        c.execute("""
+            SELECT pair, direction, status, pnl
+            FROM trades
+            WHERE created_at LIKE ?
+            ORDER BY created_at DESC
+        """, (f"{today}%",))
+        trades = c.fetchall()
+        conn.close()
 
-    bot.reply_to(message, summary_msg, parse_mode="HTML")
+        if not trades:
+            bot.reply_to(message, "📊 No trades recorded today.")
+            return
 
-def run_telegram_bot():
-    print("✅ Telegram bot listener started (polling mode)...")
-    threading.Thread(target=lambda: bot.polling(non_stop=True)).start()
+        total_pnl = 0
+        wins = 0
+        losses = 0
+        trade_lines = []
+
+        for t in trades:
+            pair, direction, status, pnl = t
+            pnl = float(pnl or 0)
+            total_pnl += pnl
+            if status.lower() == "win":
+                wins += 1
+            elif status.lower() == "loss":
+                losses += 1
+            trade_lines.append(f"{pair} | {direction} | {status} | {pnl:.2f}")
+
+        summary = (
+            "📊 *Today's Trades:*\n"
+            + "\n".join(trade_lines)
+            + f"\n\n✅ Wins: {wins} | ❌ Losses: {losses} | 💰 Net PnL: {total_pnl:.2f}"
+        )
+
+        bot.reply_to(message, summary, parse_mode="Markdown")
+
+    except Exception as e:
+        bot.reply_to(message, f"❌ Error: {e}")
+
+
+# Background thread to send PnL summary at midnight IST
+def send_daily_pnl():
+    while True:
+        now = datetime.now(pytz.timezone("Asia/Kolkata"))
+        if now.hour == 0 and now.minute == 0:
+            try:
+                today = now.strftime("%Y-%m-%d")
+                conn = sqlite3.connect(DB_FILE)
+                c = conn.cursor()
+                c.execute("""
+                    SELECT pair, direction, status, pnl
+                    FROM trades
+                    WHERE created_at LIKE ?
+                    ORDER BY created_at DESC
+                """, (f"{today}%",))
+                trades = c.fetchall()
+                conn.close()
+
+                if trades:
+                    total_pnl = 0
+                    wins = 0
+                    losses = 0
+                    trade_lines = []
+                    for t in trades:
+                        pair, direction, status, pnl = t
+                        pnl = float(pnl or 0)
+                        total_pnl += pnl
+                        if status.lower() == "win":
+                            wins += 1
+                        elif status.lower() == "loss":
+                            losses += 1
+                        trade_lines.append(f"{pair} | {direction} | {status} | {pnl:.2f}")
+
+                    summary = (
+                        "📊 *Daily PnL Summary:*\n"
+                        + "\n".join(trade_lines)
+                        + f"\n\n✅ Wins: {wins} | ❌ Losses: {losses} | 💰 Net PnL: {total_pnl:.2f}"
+                    )
+                    bot.send_message(CHAT_ID, summary, parse_mode="Markdown")
+            except Exception as e:
+                bot.send_message(CHAT_ID, f"❌ Error sending daily PnL: {e}")
+        # Sleep 60 seconds to avoid multiple sends in same minute
+        time.sleep(60)
+
+
+# Start polling + PnL thread
+threading.Thread(target=send_daily_pnl, daemon=True).start()
+threading.Thread(target=lambda: bot.polling(non_stop=True)).start()
