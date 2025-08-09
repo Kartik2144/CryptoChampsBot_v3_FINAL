@@ -5,8 +5,8 @@ import pytz
 import sqlite3
 import os
 
-TOKEN = os.getenv("TELEGRAM_TOKEN")
-CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+TOKEN = os.getenv("YOUR_TELEGRAM_BOT_TOKEN")
+CHAT_ID = os.getenv("YOUR_TELEGRAM_CHAT_ID")
 DB_FILE = "trades.db"
 
 bot = telebot.TeleBot(TOKEN)
