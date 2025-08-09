@@ -1,5 +1,6 @@
 import telebot
 import threading
+import requests
 from datetime import datetime
 import pytz
 import sqlite3
@@ -8,9 +9,27 @@ import os
 TOKEN = os.getenv("YOUR_TELEGRAM_BOT_TOKEN")
 CHAT_ID = os.getenv("YOUR_TELEGRAM_CHAT_ID")
 DB_FILE = "trades.db"
-
+requests.get(f"https://api.telegram.org/bot{TOKEN}/deleteWebhook")
+print("✅ Webhook deleted (polling enabled)")
+if not TOKEN:
+    raise ValueError("❌ YOUR_TELEGRAM_BOT_TOKEN is not set. Please add it to Railway environment variables.")
 bot = telebot.TeleBot(TOKEN)
 
+# ✅ Command: /start
+@bot.message_handler(commands=['start'])
+def start_command(message):
+    bot.reply_to(
+        message,
+        "👋 <b>Welcome to CryptoChamps Hybrid Bot!</b>\n\n"
+        "Use the following commands:\n"
+        "📊 /pnl - Show today’s simulated PnL\n"
+        "🚀 /testsignal - Send a sample signal\n",
+        parse_mode="HTML"
+    )
+@bot.message_handler(commands=['testsignal'])
+def test_signal(message):
+    bot.reply_to(message, "✅ Bot is active and ready!")
+    
 # /pnl command - shows today's trades
 @bot.message_handler(commands=['pnl'])
 def pnl_command(message):
@@ -102,7 +121,8 @@ def send_daily_pnl():
         # Sleep 60 seconds to avoid multiple sends in same minute
         time.sleep(60)
 
-
+def run_telegram_bot():
+    print("✅ Telegram bot listener started (polling mode)...")
 # Start polling + PnL thread
 threading.Thread(target=send_daily_pnl, daemon=True).start()
 threading.Thread(target=lambda: bot.polling(non_stop=True)).start()
