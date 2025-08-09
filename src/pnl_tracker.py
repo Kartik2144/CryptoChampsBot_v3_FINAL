@@ -29,8 +29,7 @@ def init_db():
         conn.commit()
         print("✅ Added missing pnl column to trades table.")
     except sqlite3.OperationalError:
-        # Column already exists – ignore
-        pass
+        pass  # Column already exists – ignore
 
     conn.commit()
     conn.close()
@@ -60,27 +59,32 @@ def update_trade_status(trade_id, status, pnl_value):
     conn.close()
 
 
-# ✅ Fetch daily PnL summary (ONLY TODAY’S TRADES)
+# ✅ Fetch daily PnL summary + recent trades (ONLY TODAY’S TRADES)
 def get_daily_pnl():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
 
     today = datetime.now().strftime("%Y-%m-%d")
     c.execute(
-        "SELECT status, pnl FROM trades WHERE created_at LIKE ?",
+        "SELECT pair, direction, status, pnl FROM trades WHERE created_at LIKE ? ORDER BY created_at DESC",
         (f"{today}%",)
     )
     rows = c.fetchall()
     conn.close()
 
-    wins = sum(1 for r in rows if r[0] == 'tp')
-    losses = sum(1 for r in rows if r[0] == 'sl')
-    net_pnl = sum(r[1] for r in rows if r[1] is not None)
+    wins = sum(1 for r in rows if r[2] == 'tp')
+    losses = sum(1 for r in rows if r[2] == 'sl')
+    net_pnl = sum(r[3] for r in rows if r[3] is not None)
+
+    recent_trades = [
+        {"pair": r[0], "direction": r[1], "status": r[2], "pnl": r[3]} for r in rows
+    ]
 
     return {
         "wins": wins,
         "losses": losses,
-        "net_pnl": round(net_pnl, 2)   # ✅ renamed from total_pnl to net_pnl
+        "net_pnl": round(net_pnl, 2),
+        "recent_trades": recent_trades
     }
 
 # ✅ Initialize DB on import
