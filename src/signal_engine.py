@@ -1,7 +1,8 @@
 import ccxt
 import pandas as pd
 from datetime import datetime
-from src.telegram_bot import send_signal
+import time
+from src.telegram_bot import test_signal
 from src.pnl_tracker import save_trade
 #from src.pnl_tracker import log_trade
 exchange = ccxt.binance()
@@ -13,7 +14,7 @@ def hybrid_strategy(symbol):
     data = fetch_ohlcv(symbol)
     df = pd.DataFrame(data, columns=["time","open","high","low","close","volume"])
     df['EMA20'] = df['close'].ewm(span=20).mean()
-    df['EMA50'] = df['close'].ewm(span=50).mean()
+    df['EMA50'] = df['close'].ewm(span=50).mean()from src.telegram_bot import send_signal
     df['RSI'] = 100 - (100 / (1 + df['close'].pct_change().rolling(14).mean()))
     
     last = df.iloc[-1]
