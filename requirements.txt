@@ -1,6 +1,0 @@
-ccxt
-pandas
-pyTelegramBotAPI
-pyTelegramBotAPI==4.14.0
-schedule
-pytz
