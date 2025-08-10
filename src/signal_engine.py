@@ -7,14 +7,14 @@ from src.pnl_tracker import save_trade
 #from src.pnl_tracker import log_trade
 exchange = ccxt.binance()
 
-def fetch_ohlcv(symbol, timeframe="15m", limit=50):
-    return exchange.fetch_ohlcv(symbol, timeframe=timeframe, limit=limit)
+def fetch_ohlcv(pair, timeframe="15m", limit=50):
+    return exchange.fetch_ohlcv(pair, timeframe=timeframe, limit=limit)
 
-def hybrid_strategy(symbol):
-    data = fetch_ohlcv(symbol)
+def hybrid_strategy(pair):
+    data = fetch_ohlcv(pair)
     df = pd.DataFrame(data, columns=["time","open","high","low","close","volume"])
     df['EMA20'] = df['close'].ewm(span=20).mean()
-    df['EMA50'] = df['close'].ewm(span=50).mean()from src.telegram_bot import test_signal
+    df['EMA50'] = df['close'].ewm(span=50).mean()
     df['RSI'] = 100 - (100 / (1 + df['close'].pct_change().rolling(14).mean()))
     
     last = df.iloc[-1]
@@ -33,8 +33,8 @@ def hybrid_strategy(symbol):
         entry = round(last['close'], 2)
         tp = entry * (1.015 if signal == "LONG" else 0.985)
         sl = entry * (0.985 if signal == "LONG" else 1.015)
-        send_signal(symbol, direction, signal, entry, tp, sl, confidence)
-        save_trade(symbol, direction, entry, tp, sl)
+        send_signal(pair, direction, signal, entry, tp, sl, confidence)
+        save_trade(pair, direction, entry, tp, sl)
      #  send_signal(signal)
         log_trade(signal['pair'], signal['direction'], signal['entry'], signal['tp'], signal['sl'], signal['confidence'])
 
