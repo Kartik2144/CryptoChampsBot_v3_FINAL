@@ -126,4 +126,4 @@ def run_telegram_bot():
     print("✅ Telegram bot listener started (polling mode)...")
 # Start polling + PnL thread
 threading.Thread(target=send_daily_pnl, daemon=True).start()
-#threading.Thread(target=lambda: bot.polling(non_stop=True)).start()
+threading.Thread(target=lambda: bot.polling(non_stop=True)).start()
