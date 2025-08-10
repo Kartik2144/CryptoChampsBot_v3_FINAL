@@ -35,14 +35,19 @@ def test_signal(message):
 # /forcescan command - manually scan for signals
 @bot.message_handler(commands=['forcescan'])
 def forcescan_command(message):
-    if str(message.chat.id) != str(CHAT_ID):
-        bot.reply_to(message, "🚫 Unauthorized")
-        return
-    bot.reply_to(message, "🔍 Manually starting trade signal scan...")
-    # Import dynamically to avoid circular import
-    signal_engine = importlib.import_module("src.signal_engine")
-    threading.Thread(target=signal_engine.scan_and_send_signals).start()
-    bot.reply_to(message, "✅ Scan complete.")
+    try:
+        bot.send_message(message.chat.id, "🔍 Running manual scan for trade setups...")
+        
+        # Run the scan and get results
+        signals = scan_and_send_signals(return_results=True)  # Update signal_engine to support return_results
+
+        if signals and len(signals) > 0:
+            for sig in signals:
+                bot.send_message(message.chat.id, sig, parse_mode="Markdown")
+        else:
+            bot.send_message(message.chat.id, "❌ No trade setups found this scan.")
+    except Exception as e:
+        bot.send_message(message.chat.id, f"⚠️ Error running manual scan: {e}")
     
 # /pnl command - shows today's trades
 @bot.message_handler(commands=['pnl'])
