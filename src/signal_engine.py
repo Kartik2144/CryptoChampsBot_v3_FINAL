@@ -38,10 +38,17 @@ def hybrid_strategy(pair):
      #  send_signal(signal)
         log_trade(signal['pair'], signal['direction'], signal['entry'], signal['tp'], signal['sl'], signal['confidence'])
 
-def scan_and_send_signals():
-    top_pairs = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT"]
-    for pair in top_pairs:
-        try:
-            hybrid_strategy(pair)
-        except Exception as e:
-            print(f"⚠️ Error scanning {pair}: {e}")
+def scan_and_send_signals(return_results=False):
+    signals_found = []
+    
+    # Your scanning logic here...
+    # Instead of directly sending Telegram messages,
+    # store them in signals_found list like:
+    # signals_found.append(f"📈 {pair} {direction}\nEntry: {entry}\nSL: {sl}\nTP: {tp}")
+    
+    if return_results:
+        return signals_found
+    
+    # Old behavior - send signals via send_signal()
+    for sig in signals_found:
+        send_signal(sig)
