@@ -6,7 +6,6 @@ import pytz
 import sqlite3
 import os
 import time
-from src.signal_engine import scan_and_send_signals
 
 TOKEN = os.getenv("YOUR_TELEGRAM_BOT_TOKEN")
 CHAT_ID = os.getenv("YOUR_TELEGRAM_CHAT_ID")
@@ -39,7 +38,9 @@ def forcescan_command(message):
         bot.reply_to(message, "🚫 Unauthorized")
         return
     bot.reply_to(message, "🔍 Manually starting trade signal scan...")
-    scan_and_send_signals()
+    # Import dynamically to avoid circular import
+    signal_engine = importlib.import_module("src.signal_engine")
+    threading.Thread(target=signal_engine.scan_and_send_signals).start()
     bot.reply_to(message, "✅ Scan complete.")
     
 # /pnl command - shows today's trades
