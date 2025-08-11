@@ -34,14 +34,13 @@ def test_signal(message):
 
 # /forcescan command - manually scan for signals
 @bot.message_handler(commands=['forcescan'])
-def forcescan_command(message):
+def force_scan_command(message):
     try:
         bot.send_message(message.chat.id, "🔍 Running manual scan for trade setups...")
-        # Import dynamically to avoid circular import
-    signal_engine = importlib.import_module("src.signal_engine")
-    threading.Thread(target=signal_engine.scan_and_send_signals).start()
-        # Run the scan and get results
-        signals = scan_and_send_signals(return_results=True)  # Update signal_engine to support return_results
+
+        # Dynamically import signal_engine to avoid circular import
+        signal_engine = importlib.import_module("src.signal_engine")
+        signals = signal_engine.scan_and_send_signals(return_results=True)
 
         if signals and len(signals) > 0:
             for sig in signals:
