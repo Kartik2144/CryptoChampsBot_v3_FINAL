@@ -13,4 +13,4 @@
    - `TELEGRAM_BOT_TOKEN`
    - `CHAT_ID`
 4️⃣ Deploy — the bot will start scanning every hour.
-
+0xf8f7f6ed121fc9eb49eec2e8c6eb4d85c92e86db
